@@ -505,7 +505,82 @@ firewall-cmd --list-all
 
 **2. Add rich rule to prevent specific IP**
 ```bash
-
+firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192.168.99.13" service name="ssh" reject'
 ```
+
+
+
+
+
+
+---
+
+
+
+
+
+
+
+### Part 9: Cronjob
+
+This task involves creating a cronjob that runs daily at 1:30 AM to record all currently logged-in users. 
+The output is saved to a file in the format `timestamp – users`. 
+The cronjob can execute a shell script to automate this task.
+
+
+
+**1. Edit the crontab for the root user**
+
+To schedule the job at a specific time, we use `crontab`. 
+Add this line `30 1 * * * /task_script.sh`
+```bash
+# -e: opens the crontab editor to add or modify jobs.
+crontab -e
+
+# -l: lists existing cron jobs.  
+crontab -l
+```
+
+**2. Shell script to print the logged users with into a log file**
+
+This script collects a list of all currently logged-in users and appends it to a log file (`/var/log/user_logs.log`) along with the current timestamp. 
+It ensures the usernames are unique, separated by commas, and if no users are logged in, it records "No users logged in". 
+Each execution adds a new entry in the format: `timestamp – users`.
+
+
+```bash
+output_file=/var/log/user_logs.log
+time=$(date)
+
+users=$(who | cut -d ' ' -f 1 | sort -u | tr '\n' ',' | sed 's/,$//')
+
+if [ -z "$users" ]; then
+        users="No users logged in"
+fi
+
+echo "$time - $users" >> "$output_file"
+```
+
+
+
+
+
+
+
+
+---
+
+
+
+
+
+
+
+
+
+### Part 10: MariaDB
+
+
+
 
 
