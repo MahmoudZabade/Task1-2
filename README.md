@@ -298,6 +298,7 @@ The script prints messages showing whether the process is still running, killed,
 **1. Script for checkig if a proccess is still running for speccefic time and kill it according to the user**
 ```bash
 
+
 #!/bin/bash
 
 sleep 500 &
@@ -330,7 +331,19 @@ while [ $current_time -le $end_time ]; do
        current_time=$(date +%s)
 done
 
+
+echo "Whow killed the sleep process"
+
+if ps -p "$sleep_PID" > /dev/null 2>&1 ; then
+        kill "$sleep_PID" 2> /dev/null
+        echo "The script killed it"
+else
+        echo "The user killed it"
+fi
+
+
 echo "The script finished after $after_n_seconds seconds"
+
 
 ```
 
@@ -344,6 +357,11 @@ echo "The script finished after $after_n_seconds seconds"
 
 
 ### Part 7: Yum Repo
+
+This task involves installing essential packages and setting up repositories on RHEL 10. 
+It includes installing `tmux` and Apache (`httpd`), adding the MySQL repository to install the MySQL server, 
+and adding the Zabbix repository to download, prepare, and install all Zabbix packages with their dependencies.
+
 
 **1. Install tmux**
 ```bash
@@ -361,7 +379,7 @@ dnf install httpd
 
 **3. Install MySQL**
 
-First, we should **install `MYSQL repo`** from the internet, since MYSQL packages are not provided in the local repos (AppStream & BaseOS).
+First, we should **install `MYSQL repo** from the internet, since MYSQL packages are not provided in the local repos (AppStream & BaseOS).
 The link below is taken from the offical the webisite (https://dev.mysql.com/downloads/file/?id=542359).
 
 ```bash
@@ -387,6 +405,8 @@ dnf install mysql-community-server
 
 **4. Install Zabbix packages**
 
+**Step 1: Add the Zabbix repository**
+
 First, **Install the `Zabbix repo`** from the internet to download (mirror) all the rpm files from it later.
 And to install it we should get the repo link from the Zabbix official website provided in task 1 file, but I we habe to make sure change the version of the RHEL to make it compateble with our machine
 
@@ -398,6 +418,10 @@ This command is provided from the official webiste, so I did not use the usual o
 rpm -Uvh https://repo.zabbix.com/zabbix/7.0/rhel/10/x86_64/zabbix-release-latest-7.0.el10.noarch.rpm
 ```
 
+
+**Step 2: Sync repository packages locally**
+
+
 Then, `Download all the rpm files` from the repo on the internet
 
 ```bash
@@ -405,13 +429,83 @@ reposync -p /zabbix --repoid=zabbix --download-metadata
 ```
 
 
+**Step 3: Identify dependencies**
+
+After that, we need to download all required dependencies, since some packages are not available in the local repository.  
+First, we identify the required package names by attempting to install the needed packages (such as `zabbix-server-sql`, `zabbix-agent`, etc.).  
+During the installation process, the missing dependencies are displayed along with the repositories they belong to.
+
+
 ```bash
-reposync -p /zabbix --repoid=zabbix --download-metadata
+dnf install zabbix-server zabbix-server-mysql zabbix-sql-scripts zabbix-agent zabbix-web-mysql --enablerepo="*"
+```
+
+download the dependcies.
+```bash
+dnf --enablerepo=appstream --enablerepo=baseos download nginx-filesystem php-bcmath php-common php-fpm php-gd php-ldap php-mbstring php-mysqlnd php-xml OpenIPMI-libs unixODB
+```
+
+
+**Step 4: Prepare the local repository**
+ 
+The installation process cannot be completed without knowing which repositories provide the required packages and their dependencies.  
+Therefore, we must create or update the repository metadata to ensure all necessary packages and dependencies are available.
+
+```bash
+# Create or update repository metadata for the local Zabbix repository directory
+createrepo /zabbix/
+```
+
+
+
+**Step 5: Install Zabbix packages from local repo**
+
+
+Finally, install all the desired packages.
+```bash
+dnf install zabbix-server zabbix-server-mysql zabbix-sql-scripts zabbix-agent zabbix-web-mysql --disablerepo="*" --enablerepo=zabbix 
 ```
 
 
 
 
 
+
+
+
+--- 
+
+
+
+
+
+
+
+### Part 8: Network management
+
+This task focuses on basic network management by configuring the firewall. 
+It includes opening ports 80 and 443, making these changes permanent, 
+and blocking SSH access from a specific colleague's IP address to the VM.
+
+
+**1. Open Port 80 & 443 and make the changes permanent**
+```bash
+# Open port 80 and 443 permanently
+firewall-cmd --permanent --add-port=80/tcp
+firewall-cmd --permanent --add-port=443/tcp
+
+# Apply the changes
+firewall-cmd --reload
+
+# Verify all open ports and settings
+firewall-cmd --list-all
+```
+
+
+
+**2. Add rich rule to prevent specific IP**
+```bash
+
+```
 
 
