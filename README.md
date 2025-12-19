@@ -580,6 +580,129 @@ echo "$time - $users" >> "$output_file"
 
 ### Part 10: MariaDB
 
+This task involves setting up MariaDB on the system using a local repository. 
+It includes opening the necessary ports in the firewall, creating a database and user with proper permissions, 
+and connecting to the database using the new user. 
+As an example, a `mahmouddb` database is created with ten student records containing personal details, program enrolled, expected graduation year, and student numbers.
+
+
+**1. Install MariaDB from the local repo that was created earlier**
+
+Befor installing the MariaDB from the local repo, we have to make sure that all the dependencies are all exist in the repo, so first we should download all the dependencies packages in the local ropo under this path `/zabbix`
+
+
+**Download the dependencies packages**
+
+```bash
+# downloads the 'mariadb' and 'mariadb-server' packages along with all their dependencies without installing them.
+dnf download --resolve mariadb-server mariadb
+```
+
+**Install MariaDB**
+
+```bash
+dnf install mariadb-server --disablerepo="*" --enablerepo="zabbix"
+```
+
+
+
+
+**2. Open ports in the iptables from MariaDB**
+
+I used `firewall` to add a port since there is no `iptables` in the Redhat course
+
+```bash
+# Opne the default port of MariaDB which is 3306 over TCP
+firewall-cmd --permanent --add-port=3306/tcp4
+firewall-cmd --reload
+```
+
+
+
+**3. Create database, user (note: handle permissions)**
+
+First, log in as the MariaDB root user. The root user can manage databases, create tables, and add new users:
+
+
+```bash
+# Log in as root user
+# -u specifies the username
+mysql -u root
+```
+
+After logging in, you can execute the following SQL queries to manage the database and user:
+```bash
+# Create a database named mahmoudDB
+CREATE DATABASE mahmoudDB;
+
+# Create a user named 'user' with password 'password', accessible only from localhostwith password: password
+CREATE USER 'user'@'localhost' IDENTIFIED BY 'password';
+
+# Grant all privileges on the database to the new user
+GRANT ALL PRIVILEGES ON mahmoudDB.* TO 'user'@'localhost';
+
+# Apply the changes
+FLUSH PRIVILEGES;
+
+```
+
+
+**4. Connect to the database created in step 3 using the new user (with password)**
+```bash
+# login as 'user' user and access the mahmoudDB database with password
+mysql -u user -p mahmoudDB
+```
+
+
+
+
+**4. Create a schema**
+
+To create a schema, we define a table with a meaningful name (for example, `students`). 
+Each column must have an appropriate data type, and a suitable column should be selected as the primary key to uniquely identify each record.
+
+```bash
+CREATE TABLE students (
+    student_number VARCHAR(10) PRIMARY KEY,
+    firstname VARCHAR(50),
+    lastname VARCHAR(50),
+    program VARCHAR(50),
+    grad_year INT
+);
+
+```
+
+This SQL statement inserts sample student records into the `students` table.  
+Each row represents one student with a unique student number, first and last name, enrolled program, and expected graduation year.
+
+```bash
+INSERT INTO students (student_number, firstname, lastname, program, grad_year) VALUES
+('110-001', 'Allen',  'Brown',  'mechanical',      2017),
+('110-002', 'David',  'Brown',  'mechanical',      2017),
+('110-003', 'Mary',   'Green',  'mechanical',      2018),
+('110-004', 'Dennis', 'Green',  'electrical',      2018),
+('110-005', 'Joseph', 'Black',  'electrical',      2018),
+('110-006', 'Dennis', 'Black',  'electrical',      2020),
+('110-007', 'Ritchie','Salt',   'computer science',2020),
+('110-008', 'Robert', 'Salt',   'computer science',2020),
+('110-009', 'David',  'Suzuki', 'computer science',2020),
+('110-010', 'Mary',   'Chen',   'computer science',2020);
+```
+
+
+
+
+
+**4.  Verify that the schema is created successfully**
+```bash
+# Display all records from the students table
+SELECT *
+FROM students;
+```
+
+
+
+
 
 
 
