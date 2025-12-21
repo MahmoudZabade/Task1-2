@@ -9,10 +9,10 @@ This Task will focuse on Linux and shell. Task1 is devided into 10 main topics w
 - Permissions
 - SELinux
 - bash script and processes
--  Yum Repo
--   Network management
--   Cronjob
--   Mariadb
+- Yum Repo
+- Network management
+- Cronjob
+- Mariadb
 
 ### Part 1: LVM
 This task involves configuring LVM on the second disk by creating a volume group with a 16 MB extent size and a logical volume of 50 extents. The logical volume is formatted as ext4 and set to mount automatically at `/mnt/data`.
@@ -699,6 +699,109 @@ INSERT INTO students (student_number, firstname, lastname, program, grad_year) V
 SELECT *
 FROM students;
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
+
+
+
+
+## Task 2
+
+This task focuses on monitoring system performance by automatically collecting `CPU`, `memory`, and `disk` statistics, processing them to calculate averages, and displaying the results on a web page using an Apache server.
+
+
+### Part 1: Data Collection Shell Script
+
+This Bash script is responsible for collecting system performance statistics and storing them for later analysis and web display. It creates a directory inside the Apache web root to hold the data files and generates a timestamp to uniquely identify each collection cycle.
+
+The script collects:
+- **CPU statistics** by extracting the CPU idle percentage.
+- **Memory statistics** including used and free memory in gigabytes.
+- **Disk statistics** including used and free disk space for the root (`/`) partition.
+
+Each metric is stored in a separate file named with the metric type and the timestamp.
+
+```bash
+#!/bin/bash
+
+################################## collect data ######################################
+output_dir="/var/www/html/data"
+mkdir -p $output_dir
+
+time=$(date +%Y-%m-%d-%H-%M-%S)
+
+cpu=$(top -bn1 | grep "Cpu" | grep -o '[0-9.]* id' | cut -d' ' -f1)
+echo "$time $cpu" >> "$output_dir/cpu_$time.txt"
+
+used_mem=$(free --giga | grep "Mem" | tr -s ' ' | cut -d' ' -f3)
+free_mem=$(free --giga | grep "Mem" | tr -s ' ' | cut -d' ' -f7)
+echo "$time $used_mem $free_mem" >> "$output_dir/mem_$time.txt"
+
+used_disk=$(df -BG / | tail -1 | tr -s ' ' | cut -d' ' -f3 | sed 's/G//')
+free_disk=$(df -BG / | tail -1 | tr -s ' ' | cut -d' ' -f4 | sed 's/G//')
+
+echo "$time $used_disk $free_disk" >> "$output_dir/disk_$time.txt"
+
+echo "All the data r collected at time: $time"
+
+```
+
+
+### Part 2: First Cron Job: Periodic Data Collection
+
+This cronjob will work every minute to collect the data from the CPU, memory and disk.
+To make the cronjob to collect data every minute add this record `* * * * *  `/collect.sh`
+
+```bash
+# To add a new record in the cron tab
+# Add this record `* * * * *  /collect.sh`
+crontab -e
+
+# To ensure that the record was added successfully
+crontab -l
+```
+
+
+
+
+
+---
+
+
+### Part 3: Data Processing and Average Calculation Shell Script
+
+This script processes the system statistics collected by the data collection script. It reads CPU, memory, and disk data from stored files, calculates average values, and dynamically generates HTML pages to display both the averages and all recorded data with timestamps.
+
+
+
+---
+
+
+#### 3.1 Reading Collected Data from Files
+
+The script reads previously collected system statistics from text files stored in the `/var/www/html/data` directory.  
+Each metric (CPU, memory, and disk) is stored in separate files with a timestamp, allowing the script to iterate over all available records for processing.
+
+
+
+
+
 
 
 
